@@ -40,19 +40,26 @@ app.get("/contact", async (req, res) => {
         `https://api.hubapi.com/contacts/v1/contact/email/${email}/profile?hapikey=${process.env.API_KEY}`
       )
       .then((response) => response.data)
-      .catch((err) => console.log(err));
+      .catch((err) => console.log("Not found"));
   };
 
   const emailData = await getEmail();
 
-  const final = {
-    hubspotId: emailData["portal-id"],
-    lastName: emailData.properties.lastname.value,
-    firstname: emailData.properties.firstname.value,
-    email: emailData.properties.email.value,
-  };
-  console.log(JSON.stringify(final, null, 2));
-  res.send(final);
+  if (emailData) {
+    const final = {
+      hubspotId: emailData["portal-id"],
+      lastName: emailData.properties.lastname.value,
+      firstname: emailData.properties.firstname.value,
+      email: emailData.properties.email.value,
+    };
+
+    console.log(JSON.stringify(final, null, 2));
+    res.send(final);
+    res.end();
+  }
+  res.status(404).send({
+    error: "Not found",
+  });
   res.end();
 });
 
@@ -84,7 +91,8 @@ app.get("/contacts/csv", async (req, res) => {
 // https://api.hubapi.com/contacts/v1/search/query?q=testingapis&hapikey=demo
 
 app.get("/search-contacts", async (req, res) => {
-  const firstname = req.query.q;
+  const firstname = req.query.firstname;
+  console.log(firstname);
   const getByFirstName = () => {
     return axios
       .get(
@@ -110,7 +118,8 @@ app.get("/search-contacts", async (req, res) => {
 });
 
 app.get("/oauth", async (req, res) => {
-  res.send("Hi, you are logged in");
+  res.write("Hi, you are authenticated");
+
   const formData = {
     grant_type: "authorization_code",
     client_id: process.env.CLIENT_ID,
@@ -119,19 +128,23 @@ app.get("/oauth", async (req, res) => {
     code: req.query.code,
   };
 
+  console.log(formData);
+  const options = {
+    method: 'POST',
+    headers: { 'content-type': 'x-www-form-urlencoded' },
+    data: formData,
+    url: "https://api.hubapi.com/oauth/v1/token",
+  };
+
   const getToken = () => {
-    return axios
-      .post("https://api.hubapi.com/oauth/v1/token", JSON.stringify(formData), {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((resp) => resp)
-      .catch((err) => err);
+    return axios(options)
+    .then(resp => resp)
+    .catch(err => err)
   };
 
   const myToken = await getToken();
   console.log(myToken);
+  res.send();
 });
 
 app.listen(3000, () => {
