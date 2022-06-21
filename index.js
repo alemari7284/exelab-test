@@ -138,13 +138,13 @@ app.get("/oauth", async (req, res) => {
 
   const getToken = () => {
     return axios(options)
-    .then(resp => resp)
-    .catch(err => err)
+    .then(resp => resp.json())
+    .catch(err => console.error(err))
   };
 
   const myToken = await getToken();
   console.log(myToken);
-  res.send();
+  res.send(myToken);
 });
 
 app.listen(3000, () => {
